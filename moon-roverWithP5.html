@@ -1,0 +1,549 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Ukufu Test</title>
+    <meta name="description" content="The Ukufu Test">
+    <meta name="author" content="SitePoint">
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+</head>
+
+<body>
+
+    <div class="container-fluid" style="height: 80px;">
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-4" style="height: 180px;">
+                <div class="container">
+                    <div class="row justify-content-md-center">
+                        <input type="text" id="gridsize" name="lname" value="5 6"><br><br>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <label>Enter the GRID Size</label>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:20px">
+
+                        <input type="text" id="rover1" name="lname" value="1 2 N LMLMLMLMM"><br><br>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <label>Enter Rover 1 Command</label>
+                    </div>
+
+                    <div class="row justify-content-md-center" style="margin-top:20px">
+
+                        <input type="text" id="rover2" name="lname" value="2 3 N LMLMLMLMM"><br><br>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <label>Enter Rover 1 Command</label>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <button onclick="setGrid()"> Reset </button>
+                        <!--button onclick="initiateMovingRover1()"> R1 CommandString </button-->
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="canvasContainer" class="col-lg-5" style="height: 380px;">
+                <div class="row">
+                    <div class="col">
+                        <p id="statusbar">Rover Movement Log!</p>
+                    </div>
+                    <div class="col">
+                        <p id="statusbar2">Step 0</p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-lg-2">
+                <img src="img/compass2.png" width="150px">
+
+            </div>
+        </div>
+        <script src="js/jquery-3.5.1.min.js"></script>
+        <script src=" js/bootstrap.min.js "></script>
+        <script src="js/p5.min.js"></script>
+        <script src="js/rover.js"></script>
+        <script>
+            var x = 0;
+            var xLimit = 5;
+            var yLimit = 6;
+            var isRover1Set = false;
+            var isRover2Set = false;
+            var rover1String = "NA";
+            var rover2String = "NA";
+            var gridArray = [];
+            var isGridArraySet = false;
+            var Started = false;
+            var isRover1Started = false;
+            var isRover2Started = false;
+            var startxR1;
+            var startxR2;
+            var startyR1;
+            var startyR2;
+            var R1Orientation;
+            var R2Orientation;
+            var r1CommandString;
+            var r2CommandString;
+            var printOnce = false;
+            let r1Image;
+            let r1StartX = 0;
+            let r2StartX = 0;
+            let r1StartY = 0;
+            let r2StartY = 0;
+            var r1moveX;
+            var r2moveY;
+            var r1step;
+            var stepCount = 0;
+            var stepCount2 = 0;
+            var r1CommandArray = [];
+            var r2CommandArray = [];
+            var timer = 0;
+            var r1direction;
+            var r1SteptargetX;
+            var r1SteptargetY;
+            var r1stepX;
+            var r1stepY;
+            var r1Pos = new PositionVector(0, 0);
+            var r2Pos = new PositionVector(0, 0);
+            var r1StepPos = new StepVector(0, 0);
+            var r2StepPos = new StepVector(0, 0);
+            var statusString = "";
+            var isRoverNotFinished = true;
+            var isRover2NotFinished = true;
+
+            function preload() {
+                r1Image = loadImage("https://i.ibb.co/LZkS3qF/r1.png");
+            }
+
+            function setup() {
+                var myCanvas = createCanvas(450, 450);
+                myCanvas.background(100);
+                myCanvas.parent("canvasContainer");
+                frameRate(10);
+
+            }
+            var y = 0;
+
+            function draw() {
+                timer++;
+
+                background(100);
+                if (Started) {
+                    drawGrid();
+                    if (isGridArraySet) {
+                        initiatedrawRover1();
+                        if (isRover1Started) {
+                            if (timer % 50 == 0) {
+                                console.log(r1CommandArray.length, "- r1Command Length");
+                                console.log(stepCount, "- stepCount");
+                                if (stepCount < r1CommandArray.length) {
+                                    var step = r1CommandArray[stepCount];
+                                    getDirection(stepCount, step);
+                                    //r1step = getStep(stepCount);
+                                    stepCount++;
+                                } else {
+                                    console.log("Stopping Rover1");
+                                    r1StepPos.x = 0;
+                                    r1StepPos.y = 0;
+                                    document.getElementById("statusbar2").textContent = "Rover1 Over";
+                                    if (!isRover2Started) {
+                                        startRover2();
+                                        //stepCount = 0;
+                                    }
+
+                                }
+
+
+                            } else {
+                                moveRover1();
+                            }
+
+                        }
+                        if (isRover2Started) {
+                            if (timer % 50 == 0) {
+                                console.log(r2CommandArray.length, "- r2Command Length");
+                                console.log(stepCount2, "- stepCount");
+                                if (stepCount2 < r2CommandArray.length) {
+                                    var step = r2CommandArray[stepCount2];
+                                    getDirection2(stepCount2, step);
+                                    document.getElementById("statusbar2").textContent = "Rover2 Activated";
+                                    //r1step = getStep(stepCount);
+                                    stepCount2++;
+                                } else {
+                                    console.log("Stopping Rover1");
+                                    r2StepPos.x = 0;
+                                    r2StepPos.y = 0;
+                                    document.getElementById("statusbar2").textContent = "Rover1 Over";
+                                }
+
+
+                            } else {
+                                moveRover2();
+                            }
+
+                        }
+                    }
+                }
+
+
+            }
+
+            /*function initiateMovingRover1() {
+
+                console.log(Array.from(r1CommandString));
+
+
+            }*/
+
+            function startRover2() {
+
+                initiatedrawRover2();
+                if (isRover2Started) {
+
+
+
+                }
+            }
+
+            function initiatedrawRover2() {
+                var roverString2_2 = document.getElementById('rover2').value;
+                rover2StringArray = roverString2_2.split(" ");
+                startxR2 = parseInt(rover2StringArray[0]);
+                startyR2 = parseInt(rover2StringArray[1]);
+
+                r2CommandString = rover2StringArray[3];
+                r2CommandArray = Array.from(r2CommandString);
+                if (!isRover2Started) {
+                    r2Pos.direction = rover2StringArray[2];
+                    for (i = 0; i < gridArray.length; i++) {
+
+                        var gr = gridArray[i];
+                        if (gr.xCord == startxR2 && gr.yCord == startyR2) {
+
+                            if (!printOnce) {
+                                console.log("match found at ", gr);
+                                printOnce = true;
+                            }
+                            //image(r1Image, gr.x, gr.y, 50, 50);
+                            r2StartX = gr.x;
+                            r2Pos.x = gr.x;
+                            r2StartY = gr.y;
+                            r2Pos.y = gr.y;
+                        }
+
+                    }
+                }
+
+
+                isRover2Started = true;
+                //console.log(startxR1, startxR2, R1Orientation);
+
+            }
+
+
+            function getDirection(stepCount, step) {
+
+                //var step = r1CommandArray[stepCount];
+                //var statusString = step + " is the step & Direction is " + r1Pos.direction;
+                statusString = statusString + " - " + step;
+                document.getElementById("statusbar").textContent = statusString;
+                document.getElementById("statusbar2").textContent = "Step " + stepCount;
+                console.log("entering getDirection");
+                console.log("Step is ", step);
+                console.log("Direction - ", r1Pos.direction);
+                let posHolder;
+                if (stepCount > r1CommandArray.length) {
+                    isRoverNotFinished = false;
+                    return;
+                }
+                if (step == "M") {
+                    // do nothing
+                    posHolder = r1Pos.direction;
+                    if (r1Pos.direction == "N") {
+                        r1StepPos.x = 0;
+                        r1StepPos.y = -1;
+                    }
+                    if (r1Pos.direction == "E") {
+                        r1StepPos.x = 1;
+                        r1StepPos.y = 0;
+                    }
+                    if (r1Pos.direction == "W") {
+                        r1StepPos.x = -1;
+                        r1StepPos.y = 0;
+                    }
+                    if (r1Pos.direction == "S") {
+                        r1StepPos.x = 0;
+                        r1StepPos.y = 1;
+                    }
+                }
+                if (step == "L" && r1Pos.direction == "N") {
+                    console.log("Conditon met");
+                    posHolder = "W";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                if (step == "L" && r1Pos.direction == "E") {
+                    posHolder = "N";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                if (step == "L" && r1Pos.direction == "W") {
+                    posHolder = "S";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                if (step == "L" && r1Pos.direction == "S") {
+                    posHolder = "E";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                //// Now the Right Configurations
+                if (step == "R" && r1Pos.direction == "N") {
+                    posHolder = "E";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                if (step == "R" && r1Pos.direction == "E") {
+                    posHolder = "S";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                if (step == "R" && r1Pos.direction == "W") {
+                    posHolder = "N";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+                if (step == "R" && r1Pos.direction == "S") {
+                    posHolder = "W";
+                    r1StepPos.x = 0;
+                    r1StepPos.y = 0;
+                }
+
+                r1Pos.direction = posHolder;
+                //console.log("entering getDirection");
+                //console.log("Step is ", step);
+                //console.log("Direction - ", r1Pos.direction);
+                //console.log(r1Pos.direction, r1StepPos.x, r1StepPos.y, stepCount, "new");
+
+            }
+
+            function getDirection2(stepCount, step) {
+
+                //var step = r1CommandArray[stepCount];
+                //var statusString = step + " is the step & Direction is " + r1Pos.direction;
+                statusString = statusString + " - " + step;
+                document.getElementById("statusbar").textContent = statusString;
+                document.getElementById("statusbar2").textContent = "Step " + stepCount;
+                console.log("entering getDirection");
+                console.log("Step is ", step);
+                console.log("Direction - ", r1Pos.direction);
+                let posHolder;
+                if (stepCount2 > r2CommandArray.length) {
+                    isRover2NotFinished = false;
+                    return;
+                }
+                if (step == "M") {
+                    // do nothing
+                    posHolder = r2Pos.direction;
+                    if (r2Pos.direction == "N") {
+                        r2StepPos.x = 0;
+                        r2StepPos.y = -1;
+                    }
+                    if (r2Pos.direction == "E") {
+                        r2StepPos.x = 1;
+                        r2StepPos.y = 0;
+                    }
+                    if (r2Pos.direction == "W") {
+                        r2StepPos.x = -1;
+                        r2StepPos.y = 0;
+                    }
+                    if (r2Pos.direction == "S") {
+                        r2StepPos.x = 0;
+                        r2StepPos.y = 1;
+                    }
+                }
+                if (step == "L" && r2Pos.direction == "N") {
+                    console.log("Conditon met");
+                    posHolder = "W";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                if (step == "L" && r2Pos.direction == "E") {
+                    posHolder = "N";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                if (step == "L" && r2Pos.direction == "W") {
+                    posHolder = "S";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                if (step == "L" && r2Pos.direction == "S") {
+                    posHolder = "E";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                //// Now the Right Configurations
+                if (step == "R" && r2Pos.direction == "N") {
+                    posHolder = "E";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                if (step == "R" && r2Pos.direction == "E") {
+                    posHolder = "S";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                if (step == "R" && r2Pos.direction == "W") {
+                    posHolder = "N";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+                if (step == "R" && r2Pos.direction == "S") {
+                    posHolder = "W";
+                    r2StepPos.x = 0;
+                    r2StepPos.y = 0;
+                }
+
+                r2Pos.direction = posHolder;
+                //console.log("entering getDirection");
+                //console.log("Step is ", step);
+                //console.log("Direction - ", r1Pos.direction);
+                //console.log(r1Pos.direction, r1StepPos.x, r1StepPos.y, stepCount, "new");
+
+            }
+
+
+            function moveRover1() {
+
+                //step = 0.3;
+
+                r1Pos.x = r1Pos.x + (450 / (xLimit * 50)) * r1StepPos.x;
+                r1Pos.y = r1Pos.y + (450 / (yLimit * 50)) * r1StepPos.y;
+                circle(r1Pos.x, r1Pos.y, 40);
+                //image(r1Image, r1StartX, r1StartY, 50, 50);
+
+
+                //console.log(r1Pos.x, r1Pos.y, r1Pos.direction, "the r1Pos x, r1Posy, r1Pos directiorn");
+                //console.log(r1StepPos.x, r1StepPos.y, "the r1StepPos x and y");
+
+
+            }
+
+            function moveRover2() {
+
+                r2Pos.x = r2Pos.x + (450 / (xLimit * 50)) * r2StepPos.x;
+                r2Pos.y = r2Pos.y + (450 / (yLimit * 50)) * r2StepPos.y;
+                circle(r2Pos.x, r2Pos.y, 50);
+
+            }
+
+            function initiatedrawRover1() {
+
+                rover1StringArray = rover1String.split(" ");
+                startxR1 = parseInt(rover1StringArray[0]);
+                startyR1 = parseInt(rover1StringArray[1]);
+
+                r1CommandString = rover1StringArray[3];
+                r1CommandArray = Array.from(r1CommandString);
+                if (!isRover1Started) {
+                    r1Pos.direction = rover1StringArray[2];
+                    for (i = 0; i < gridArray.length; i++) {
+
+                        var gr = gridArray[i];
+                        if (gr.xCord == startxR1 && gr.yCord == startyR1) {
+
+                            if (!printOnce) {
+                                console.log("match found at ", gr);
+                                printOnce = true;
+                            }
+                            image(r1Image, gr.x, gr.y, 50, 50);
+                            r1StartX = gr.x;
+                            r1Pos.x = gr.x;
+                            r1StartY = gr.y;
+                            r1Pos.y = gr.y;
+                        }
+
+                    }
+                }
+
+
+                isRover1Started = true;
+                //console.log(startxR1, startxR2, R1Orientation);
+
+            }
+
+
+
+
+
+            function getGridArray() {
+
+                console.log(gridArray);
+
+            }
+
+            function drawGrid() {
+
+                gridwidth = 450 / xLimit;
+                gridheight = 450 / yLimit;
+                xCount = 1;
+                yCount = yLimit;
+
+                for (i = 0; i < 450; i = i + gridwidth) {
+
+                    for (j = 0; j < 450; j = j + gridheight) {
+
+                        fill(100);
+                        rect(i, j, gridwidth, gridheight);
+                        fill(255);
+                        textSize(15);
+                        corString = xCount.toString() + ',' + yCount.toString();
+                        text(corString, i + gridwidth - 30, j + 30);
+                        stroke(41);
+                        if (!isGridArraySet) {
+                            grid = new Grid(i + gridwidth, j, 100, 100, xCount, yCount);
+                            gridArray.push(grid);
+                        }
+
+                        yCount--;
+
+                    }
+                    yCount = yLimit;
+                    xCount++;
+                }
+                isGridArraySet = true;
+            }
+
+
+
+            function setGrid() {
+                isGridArraySet = false;
+                gridArray = [];
+                var gridsizeString = document.getElementById("gridsize").value;
+                rover1String = document.getElementById("rover1").value;
+                console.log(rover1String);
+                var rover2String = document.getElementById("rover2").value;
+                console.log(gridsizeString);
+                var res = gridsizeString.split(" ");
+                console.log(res);
+                xLimit = parseInt(res[0]);
+                yLimit = parseInt(res[1]);
+                var gridwidth = 450 / yLimit;
+                var gridheight = 450 / xLimit;
+                console.log("yLimit", yLimit, "xLimit", xLimit, "rover1String", rover1String);
+                Started = true;
+            }
+        </script>
+
+
+</body>
+
+</html>

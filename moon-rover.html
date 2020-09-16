@@ -1,0 +1,163 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Ukufu Test</title>
+    <meta name="description" content="The Ukufu Test">
+    <meta name="author" content="SitePoint">
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+</head>
+
+<body>
+
+    <div class="container-fluid" style="height: 80px;">
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-4" style="height: 180px;">
+
+                <div class="container">
+                    <div class="row justify-content-md-center">
+                        <label>Enter Grid Size</label>
+                        <input type="text" id="gridsize" name="lname"><br><br>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <label>Enter Rover 1 Command</label>
+                        <input type="text" id="rover1" name="lname"><br><br>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <label>Enter Rover 2 Command</label>
+                        <input type="text" id="rover2" name="lname"><br><br>
+                    </div>
+                    <div class="row justify-content-md-center" style="margin-top:10px">
+                        <button onclick="gridReset()"> Reset </button><button> Submit </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="canvasContainer" class="col-lg-5" style="height: 380px;">
+                <canvas id="myCanvas" width="450px" height="450px">
+                </canvas>
+
+            </div>
+            <div class="col-lg-2">
+                <img src="img/compass2.png" width="150px">
+                <img id="r1" src="IMG/r1.PNG" width="64" height="75">
+                <img id="r2" src="IMG/r2.PNG" width="64" height="75">
+            </div>
+        </div>
+        <script src="js/jquery-3.5.1.min.js"></script>
+        <script src=" js/bootstrap.min.js "></script>
+        <script>
+            var canvasContainer = document.getElementById("canvasContainer");
+            var canvas = document.getElementById('myCanvas');
+            canvas.style.border = "1px solid #0000FF";
+            var c = document.getElementById("myCanvas");
+            var ctx = c.getContext("2d");
+            var line1;
+            var line2;
+            // draw grid first
+            class Grid {
+                constructor(x, y, width, height, cordX, cordY) {
+                    this.x = x;
+                    this.y = y;
+                    this.width = width;
+                    this.height = height;
+                    this.xCord = cordX;
+                    this.yCord = cordY;
+                }
+
+            }
+
+            function kickOffMovement(gridArray, r1startx, r1starty, r1Orientation, r1commands, ctx) {
+                var ctx = ctx;
+                var r1commands = r1commands;
+                var gridArray = gridArray;
+                var r1startx = r1startx;
+                var r1starty = r1starty;
+                console.log("GridArray from function", gridArray);
+                console.log("Commands for Rover1", r1commands);
+
+            }
+
+            function gridReset() {
+                ctx.clearRect(0, 0, 450, 450);
+                var gridsizeString = document.getElementById("gridsize").value;
+                var rover1String = document.getElementById("rover1").value;
+                var rover2String = document.getElementById("rover2").value;
+                console.log(gridsizeString);
+                var res = gridsizeString.split(" ");
+                console.log(res);
+                var yLimit = parseInt(res[0]);
+                var xLimit = parseInt(res[1]);
+                var gridwidth = 450 / yLimit;
+                var gridheight = 450 / xLimit;
+                var i, j;
+                const gridArray = [];
+                var cordX = 1,
+                    cordY = xLimit;
+                for (i = 0; i < 450; i = i + gridwidth) {
+
+                    for (j = 0; j < 450; j = j + gridheight) {
+                        ctx.beginPath();
+                        ctx.rect(i, j, gridwidth, gridheight);
+
+                        ctx.stroke();
+                        ctx.font = "15px Arial";
+                        var cordString = cordX.toString() + cordY.toString();
+                        ctx.fillText(cordString, i + gridwidth - 25, j + 10);
+                        console.log("i is ", i, "j is ", j, "cordString is", cordString);
+                        //var img = document.getElementById("r1");
+                        //ctx.drawImage(img, i + gridwidth / 2 - 16, j + gridheight / 2 - 16, 32, 32);
+                        grid = new Grid(i + gridwidth / 2 - 16, j + gridheight / 2 - 20, 32, 40, cordX, cordY);
+                        gridArray.push(grid);
+                        //console.log(cordX, cordY);
+                        cordY--;
+                    }
+                    cordX++;
+                    cordY = xLimit;
+                }
+                // get Rover 1 commands
+                rover1commands = rover1String.split(" ");
+                var r1startx, r1starty, r1Orientation, r1commands;
+                r1startx = rover1commands[0];
+                r1starty = rover1commands[1];
+                r1Orientation = rover1commands[2];
+                r1commands = rover1commands[3];
+                console.log("r1startx&y -", r1startx, r1starty, "r1orientation -", r1Orientation, "r1commands -", r1commands);
+                console.log(gridArray);
+                // first place the rover in the target
+
+                for (i = 0; i < gridArray.length; i++) {
+
+                    var gr = gridArray[i];
+                    if (gr.xCord == r1startx && gr.yCord == r1starty) {
+
+                        console.log(gr, "is the ", i, "grid");
+                        var img = document.getElementById("r1");
+                        img.style.transform = 'rotate(90deg)';
+                        ctx.drawImage(img, gr.x + gridwidth / 2, gr.y - gridwidth / 2, 32, 40);
+
+
+                    }
+                }
+
+
+                kickOffMovement(gridArray, r1startx, r1starty, r1Orientation, r1commands, ctx);
+
+
+
+
+            }
+        </script>
+
+
+</body>
+
+</html>
